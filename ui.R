@@ -91,5 +91,10 @@ navbarPage(
     tabPanel(
         title = "Help", 
         includeMarkdown("README.md")
+    ),
+    ### 6 ###
+    tabPanel(
+        title = "Contact", 
+        includeMarkdown("CONTACT.md")
     )
 )

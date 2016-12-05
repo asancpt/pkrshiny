@@ -1,28 +1,34 @@
+## Online NonCompart 
+
+- `Online NonCompart` <https://asan.shinyapps.io/noncompart>
+- `Online NonCompart` is open to everyone. We are happy to take your input. Please fork the repo, modify the codes and submit a pull request. <https://github.com/shanmdphd/noncompart>
+
+### Installation of NonCompart R Package
+
+```{r}
+install.packages("NonCompart")
+library(NonCompart)
+NCA(Theoph, "Subject", "Time", "conc", Dose=320)
+```
+
 ### Help
 
-- <https://cran.r-project.org/web/packages/NonCompart/NonCompart.pdf>
+- `NonCompart` package help <https://cran.r-project.org/web/packages/NonCompart/NonCompart.pdf>
 
 ### Dataset
 
-- Theoph: Oral 320 mg (N=12) <http://stat.ethz.ch/R-manual/R-devel/library/datasets/html/Theoph.html>
-- Indometh: IV 25 mg (N=6) <http://stat.ethz.ch/R-manual/R-devel/library/datasets/html/Indometh.html>
-- sd_oral_richpk: Oral 5000mg (N=50) <https://github.com/dpastoor/PKPDdatasets>
-- sd_iv_rich_pkpd: IV diverse dosing (N=50) <https://github.com/dpastoor/PKPDdatasets>
+- `Theoph`: Oral 320 mg (N=12) <http://stat.ethz.ch/R-manual/R-devel/library/datasets/html/Theoph.html>
+- `Indometh`: IV 25 mg (N=6) <http://stat.ethz.ch/R-manual/R-devel/library/datasets/html/Indometh.html>
+- `sd_oral_richpk`: Oral 5000mg (N=50) <https://github.com/dpastoor/PKPDdatasets>
+- `sd_iv_rich_pkpd`: IV diverse dosing (N=60) <https://github.com/dpastoor/PKPDdatasets>
 
 ### CDISC materials
 
 - [CDISC SDTM Implementation Guide 3.2 PDF ](https://www.cdisc.org/sites/default/files/members/standard/foundational/sdtmig/sdtmig_20v3.2_20noportfolio.pdf)
 - [CDISC Terminology PDF](https://evs.nci.nih.gov/ftp1/CDISC/SDTM/SDTM%20Terminology.pdf)
 
-
-### Contact
-
-- Package developer: Kyun-Seop Bae <k@acr.kr>
-- Shiny developer: Sungpil Han <shan@acp.kr> <https://shanmdphd.github.io>
-- Copyright: 2016, Kyun-Seop Bae
-- License: GPL-3
-
 ### Reference
+
 - Rowland M, Tozer TN. Clinical Pharmacokinetics and Pharmacodynamics - Concepts and Applications.
 4e. 2011
 - Gibaldi M, Perrier D. Pharmacokinetics 2e revised and expanded. 1982

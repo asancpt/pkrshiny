@@ -90,6 +90,6 @@ navbarPage(
     ### 5 ###
     tabPanel(
         title = "Help", 
-        includeMarkdown("help.md")
+        includeMarkdown("README.md")
     )
 )

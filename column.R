@@ -48,6 +48,7 @@ server <- function(input, output,session) {
         data_set<-read.csv(inFile$datapath, header=input$header, 
                            sep=input$sep, quote=input$quote)
     })
+    
     output$contents <- renderTable({
         
         data_set()
@@ -63,13 +64,7 @@ server <- function(input, output,session) {
                                  selected = "")
         # }
     })
-    
-    
-    output$choose_dataset <- renderUI({
-        selectInput("dataset", "Data set", as.list(data_sets))
-    })
-    
-    
+
     
     
     # Check boxes

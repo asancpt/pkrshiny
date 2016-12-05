@@ -44,6 +44,12 @@ navbarPage(
     ### 2 ###
     tabPanel(
         title = "Results",
+        
+        checkboxGroupInput("inCheckboxGroup",
+                           "Group",
+                           c("label 1" = "option1",
+                             "label 2" = "option2")),
+        #uiOutput("choose_columns"),
         #radioButtons("NCAadm", "Administration route",
         #             c("Oral or Extravascular" = "Extravascular",
         #               "Intravenous Bolus" = "Bolus",

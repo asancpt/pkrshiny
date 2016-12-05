@@ -54,6 +54,8 @@ shinyServer(function(input, output, session) {
     ### 1 ###
     output$contents <- renderTable({
         ### Start ###
+        if (is.null(input$file1) & input$Dataset == "CSV")
+            return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
         return(NCAsource)
     })
@@ -61,6 +63,8 @@ shinyServer(function(input, output, session) {
     ### 2 ###
     output$NCAresults <- renderTable({
         ### Start ###
+        if (is.null(input$file1) & input$Dataset == "CSV")
+            return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
         PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
                      input$NCAinfusion, input$NCAlog)
@@ -70,6 +74,8 @@ shinyServer(function(input, output, session) {
     ### 3 ###
     output$NCAdesc <- renderTable({
         ### Start ###
+        if (is.null(input$file1) & input$Dataset == "CSV")
+            return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
         PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
                      input$NCAinfusion, input$NCAlog)
@@ -83,6 +89,8 @@ shinyServer(function(input, output, session) {
     ### 4 ###
     output$NCAreport <- renderText({
         ### Start ###
+        if (is.null(input$file1) & input$Dataset == "CSV")
+            return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
         PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
                      input$NCAinfusion, input$NCAlog, "Text")
@@ -93,6 +101,8 @@ shinyServer(function(input, output, session) {
     
     output$PC <- renderTable({
         ### Start ###
+        if (is.null(input$file1) & input$Dataset == "CSV")
+            return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
         
         NCAsource %>% 
@@ -109,6 +119,8 @@ shinyServer(function(input, output, session) {
     
     output$PP <- renderTable({
         ### Start ###
+        if (is.null(input$file1) & input$Dataset == "CSV")
+            return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
         PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
                      input$NCAinfusion, input$NCAlog)
@@ -126,6 +138,8 @@ shinyServer(function(input, output, session) {
     ### 5 ###
     output$plot <- renderggiraph({
         ### Start ###
+        if (is.null(input$file1) & input$Dataset == "CSV")
+            return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
         PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
                      input$NCAinfusion, input$NCAlog)
@@ -157,4 +171,24 @@ shinyServer(function(input, output, session) {
             print(ggiraph(code = {print(p)})) else 
             print(ggiraph(code = {print(p + scale_y_log10())}))
     })
+    
+    dsnames <- c()
+    
+    data_set <- reactive({
+        if (is.null(input$file1) & input$Dataset == "CSV")
+            return(NULL)
+        PrepNCAsource(input$file1, input$Dataset)
+        data_set <- NCAsource
+    })
+    
+    observe({
+        dsnames <- names(data_set())
+        cb_options <- list()
+        cb_options[ dsnames] <- dsnames
+        updateCheckboxGroupInput(session, "inCheckboxGroup",
+                                 label = "Group",
+                                 choices = cb_options,
+                                 selected = "")
+    })
+    
 })

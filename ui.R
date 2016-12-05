@@ -44,23 +44,22 @@ navbarPage(
     ### 2 ###
     tabPanel(
         title = "Results",
-        
-        checkboxGroupInput(inputId = "inCheckboxGroup",
-                           label = "Group",
-                           choices = c("label 1" = "option1",
-                             "label 2" = "option2")),
-        tableOutput("TEST"),
-        #uiOutput("choose_columns"),
-        #radioButtons("NCAadm", "Administration route",
-        #             c("Oral or Extravascular" = "Extravascular",
-        #               "Intravenous Bolus" = "Bolus",
-        #               "Intravenous Infusion" = "Infusion")),
         tags$h3("Individual Parameters"),
         tableOutput("NCAresults"),
         tags$h3("Descriptive Statistics"),
         tableOutput("NCAdesc"),
         includeMarkdown("parameters.md")
     ),
+    
+    ### GROUP ###
+    tabPanel(
+        title = "Carry",
+        checkboxGroupInput(inputId = "inCheckboxGroup", choices = "initial", label = "initial"),
+        tags$h3("Individual Parameters"),
+        checkboxInput('CarrySort', 'Sort', FALSE),
+        tableOutput("NCAgroup")
+    ),
+    
     ### 3A ###
     tabPanel(
         title = "Official Report",

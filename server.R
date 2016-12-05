@@ -47,7 +47,6 @@ PrepNCAtable <- function(NCA_SOURCE, INPUT_NCADOSE, INPUT_NCAADM,
                          Method = ifelse(INPUT_NCALOG == TRUE, "Log", "Linear"),
                          Report = INPUT_REPORT)
     }
-    
 }
 
 shinyServer(function(input, output, session) {
@@ -60,23 +59,44 @@ shinyServer(function(input, output, session) {
         return(NCAsource)
     })
     
-    output$TEST <- renderTable({
-        ### Start ###
-        if (input$inCheckboxGroup == "SUBJECT")
-            return(print("SUBJECT"))
-        
-        return(print("OTHER"))
-    })
-    
     ### 2 ###
     output$NCAresults <- renderTable({
-        ### Start ###
         if (is.null(input$file1) & input$Dataset == "CSV")
             return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
         PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
                      input$NCAinfusion, input$NCAlog)
         return(NCAtable)
+        
+    })
+    ### 3 ###
+    output$NCAgroup <- renderTable({
+        NCAGroup <- input$inCheckboxGroup
+        if (is.null(NCAGroup)){
+            PrepNCAsource(input$file1, input$Dataset)
+            PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
+                         input$NCAinfusion, input$NCAlog)
+            return(NCAtable)
+        }
+            
+        ### Start ###
+        if (is.null(input$file1) & input$Dataset == "CSV")
+            return(print("None"))
+        PrepNCAsource(input$file1, input$Dataset)
+        
+        NCAGroupName <- paste(NCAGroup, collapse = "_")
+        NCAGroupData <- NCAsource %>% select_(.dots = NCAGroup) %>% 
+            unite_(col = "All", from = NCAGroup, sep = "_") %>% 
+            as.vector()
+        NCAsource[ , NCAGroupName] <- NCAGroupData
+        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
+                     input$NCAinfusion, input$NCAlog, 
+                     INPUT_TRT = NCAGroupName)
+        
+        #colnames(NCAtable)[2] <- "GROUP"
+        #NCAtable %>% arrange(GROUP, SUBJECT)
+        if (input$CarrySort == FALSE) return(NCAtable[order(NCAtable[ ,1]), ])
+        else return(NCAtable[order(NCAtable[ ,2], NCAtable[ ,1]), ])
     })
     
     ### 3 ###
@@ -185,16 +205,18 @@ shinyServer(function(input, output, session) {
     data_set <- reactive({
         if (is.null(input$file1) & input$Dataset == "CSV")
             return(NULL)
-        PrepNCAsource(input$file1, input$Dataset)
-        data_set <- NCAsource
+        PrepNCAsource(input$file1, input$Dataset) 
+        data_set <- NCAsource %>% select(-CONC, -TIME) %>% group_by(SUBJECT) %>% mutate_each(funs(dense_rank))
+        data_set[data_set>1] <- NA
+        data_set[sapply(data_set, function(x) !any(is.na(x)))] 
     })
 
     observe({
         dsnames <- names(data_set())
         cb_options <- list()
         cb_options[ dsnames] <- dsnames
-        updateCheckboxGroupInput(session, "inCheckboxGroup",
-                                 label = "Group",
+        updateCheckboxGroupInput(session, inputId = "inCheckboxGroup",
+                                 label = "Carry",
                                  choices = cb_options,
                                  selected = "")
     })

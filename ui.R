@@ -45,10 +45,11 @@ navbarPage(
     tabPanel(
         title = "Results",
         
-        checkboxGroupInput("inCheckboxGroup",
-                           "Group",
-                           c("label 1" = "option1",
+        checkboxGroupInput(inputId = "inCheckboxGroup",
+                           label = "Group",
+                           choices = c("label 1" = "option1",
                              "label 2" = "option2")),
+        tableOutput("TEST"),
         #uiOutput("choose_columns"),
         #radioButtons("NCAadm", "Administration route",
         #             c("Oral or Extravascular" = "Extravascular",

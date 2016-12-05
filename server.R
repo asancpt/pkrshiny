@@ -60,6 +60,14 @@ shinyServer(function(input, output, session) {
         return(NCAsource)
     })
     
+    output$TEST <- renderTable({
+        ### Start ###
+        if (input$inCheckboxGroup == "SUBJECT")
+            return(print("SUBJECT"))
+        
+        return(print("OTHER"))
+    })
+    
     ### 2 ###
     output$NCAresults <- renderTable({
         ### Start ###
@@ -171,7 +179,7 @@ shinyServer(function(input, output, session) {
             print(ggiraph(code = {print(p)})) else 
             print(ggiraph(code = {print(p + scale_y_log10())}))
     })
-    
+## Interactive Column Names    
     dsnames <- c()
     
     data_set <- reactive({
@@ -180,7 +188,7 @@ shinyServer(function(input, output, session) {
         PrepNCAsource(input$file1, input$Dataset)
         data_set <- NCAsource
     })
-    
+
     observe({
         dsnames <- names(data_set())
         cb_options <- list()

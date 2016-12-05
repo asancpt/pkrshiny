@@ -1,5 +1,6 @@
 rsconnect.R
 example/PC_LCB.csv
+googlesheets.R
 
 # History files
 .Rhistory
@@ -34,3 +35,4 @@ vignettes/*.pdf
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+.Rproj.user

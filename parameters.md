@@ -1,0 +1,49 @@
+### Parameters
+
+- CMAX: maximum concentration, Cmax
+- CMAXD: CMAX / Dose, Cmax / Dose
+- TMAX: time of maximum concentration, Tmax
+- TLAG: time until first nonzero concentration, for extravascular administration only
+- CLST: last positive concentration observed, Clast
+- CLSTP: last positive concentration predicted, Clast_pred
+- TLST: time of last positive concentration, Tlast
+- LAMZHL: half-life by lambda z, ln(2)/LAMZ
+- LAMZ: lambda_z negative of best fit terminal slope
+- LAMZLL: earlist time for LAMZ
+- LAMZUL: last time for LAMZ
+- LAMZNPT: number of points for LAMZ
+- CORRXY: correlaton of log(concentration) and time
+- R2: R-squared
+- R2ADJ: R-squared adjusted
+- C0: back extrapolated concentration at time 0, for bolus intravascular administration only
+- AUCLST: AUC from 0 to TLST
+- AUCALL: AUC using all the given points, including trailing zero concentrations
+- AUCIFO: AUC infinity observed
+- AUCIFOD: AUCIFO / Dose
+- AUCIFP: AUC infinity predicted using CLSTP instead of CLST
+- AUCIFPD: AUCIFP / Dose
+- AUCPEO: AUC % extrapolation observed
+- AUCPEP: AUC % extrapolated for AUCIFP
+- AUCPBEO: AUC % back extrapolation observed, for bolus IV administration only
+- AUCPBEP: AUC % back extrapolation predicted with AUCIFP, for bolus IV administration only
+- AUMCLST: AUMC to the TLST
+- AUMCIFO: AUMC infinity observed using CLST
+- AUMCIFP: AUMC infinity determiend by CLSTP
+- AUMCPEO: AUMC % extrapolated observed
+- AUMCPEP: AUMC % extrapolated predicted
+- MRTIVLST: mean residence time(MRT) to TLST, for intravascular administration
+- MRTIVIFO: mean residence time(MRT) infinity using CLST, for intravascular administration
+- MRTIVIFP: mean residence time(MRT) infinity ucinsg CLSTP, for intravascular administration
+- MRTEVLST: mean residence time(MRT) to TLST, for extravascular administration
+- MRTEVIFO: mean residence time(MRT) infinity using CLST, for extravascular administration
+- MRTEVIFP: mean residence time(MRT) infinity ucinsg CLSTP, for extravascular administration
+- VZO: volume of distribution determined by LAMZ and AUCIFO, for intravascular administration
+- VZP: volume of distribution determined by LAMZ and AUCIFP, for intravascular administration
+- VZFO: VZO for extravascular administration, VZO/F, F is bioavailability
+- VZFP: VZP for extravascular administration, VZP/F, F is bioavailability
+- CLO: clearance using AUCIFO, for intravascular administration
+- CLP: clearance using AUCIFP, for intravascular administration
+- CLFO: CLO for extravascular administration, CLO/F, F is bioavailability
+- CLFP: CLP for extravascular administration, CLP/F, F is bioavailability
+- VSSO: volume of distribution at steady state using CLST, for intravascular administration only
+- VSSP: volume of distribution at stead state using CLSTP, for intravascular administration only

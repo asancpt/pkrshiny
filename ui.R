@@ -1,11 +1,4 @@
-library(shiny)
-library(NonCompart)  
-library(markdown)
-library(pastecs)
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(ggiraph)
+source("library.R")
 
 navbarPage(
     title = "Online NonCompart",
@@ -50,19 +43,23 @@ navbarPage(
     ),
     ### 2 ###
     tabPanel(
-        title = "Results", 
+        title = "Results",
+        #radioButtons("NCAadm", "Administration route",
+        #             c("Oral or Extravascular" = "Extravascular",
+        #               "Intravenous Bolus" = "Bolus",
+        #               "Intravenous Infusion" = "Infusion")),
         tags$h3("Individual Parameters"),
         tableOutput("NCAresults"),
         tags$h3("Descriptive Statistics"),
         tableOutput("NCAdesc"),
         includeMarkdown("parameters.md")
     ),
-    ### 3 ###
+    ### 3A ###
     tabPanel(
         title = "Official Report",
         verbatimTextOutput("NCAreport")
     ),
-    ### 3A ###
+    ### 3B ###
     tabPanel(
         title = "CDISC Report",
         textInput("StudyID", "Study ID", ""),

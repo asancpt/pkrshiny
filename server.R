@@ -1,139 +1,99 @@
-library(shiny)
-library(NonCompart)  
-library(markdown)
-library(pastecs)
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(ggiraph)
+source("library.R")
 
-Theoph <- read.csv("example/Theoph.csv", as.is = TRUE) %>% mutate(Subject = sprintf("%02d", Subject))
-Indometh <- read.csv("example/Indometh.csv", as.is = TRUE) %>% mutate(Subject = sprintf("%02d", Subject))
-sd_oral_richpk <- read.csv("example/sd_oral_richpk.csv", as.is = TRUE) %>% mutate(ID = sprintf("%02d", ID))
-sd_iv_rich_pkpd <- read.csv("example/sd_iv_rich_pkpd.csv", as.is = TRUE) %>% rename(CONC = COBS) %>% mutate(ID = sprintf("%02d", ID))
+Theoph <- read.csv("example/Theoph.csv", as.is = TRUE) %>% 
+    mutate(Subject = sprintf("%02d", Subject))
+Indometh <- read.csv("example/Indometh.csv", as.is = TRUE) %>% 
+    mutate(Subject = sprintf("%02d", Subject))
+sd_oral_richpk <- read.csv("example/sd_oral_richpk.csv", as.is = TRUE) %>% 
+    mutate(ID = sprintf("%02d", ID))
+sd_iv_rich_pkpd <- read.csv("example/sd_iv_rich_pkpd.csv", as.is = TRUE) %>% 
+    rename(CONC = COBS) %>% mutate(ID = sprintf("%02d", ID))
+Abbr <- read.csv("abbr.csv", stringsAsFactors = FALSE)
 
-#PrepareNCA <- function(input$file1, input$Dataset){
-#    inFile <- input$file1
-#    if (is.null(inFile) & input$Dataset == "CSV")
-#        return(print("None")) #NULL)
-#    NCAsource <- if (input$Dataset == "CSV") read.csv(inFile$datapath) else 
-#        if (input$Dataset == "Theoph") Theoph else 
-#            if (input$Dataset == "Indometh") Indometh else sd_oral_richpk
-#    colnames(NCAsource) <- toupper(colnames(NCAsource))
-#    if (colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJECT", "SUBJID", "ID", "USUBJID")] != "SUBJECT"){
-#        colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJID", "ID", "USUBJID")] <- "SUBJECT"
-#    }
-#}
+PrepNCAsource <- function(INPUT_FILE1, INPUT_DATASET){
+    if (is.null(INPUT_FILE1) & INPUT_DATASET == "CSV")
+        return(print("None"))
+    
+    NCAsource <<- if (INPUT_DATASET == "CSV") read.csv(INPUT_FILE1$datapath) 
+    else if (INPUT_DATASET == "Theoph") Theoph
+    else if (INPUT_DATASET == "Indometh") Indometh 
+    else if (INPUT_DATASET == "sd_oral_richpk") sd_oral_richpk 
+    else if (INPUT_DATASET == "sd_iv_rich_pkpd") sd_iv_rich_pkpd
+    
+    colnames(NCAsource) <<- toupper(colnames(NCAsource))
+    if (colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJECT", "SUBJID", "ID", "USUBJID")] != "SUBJECT"){
+        colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJID", "ID", "USUBJID")] <<- "SUBJECT"
+    }
+}
 
-shinyServer(function(input, output) {
+PrepNCAtable <- function(NCA_SOURCE, INPUT_NCADOSE, INPUT_NCAADM, 
+                         INPUT_NCAINFUSION, INPUT_NCALOG, INPUT_REPORT = "Table",
+                         INPUT_TRT = "None"){
+    if (INPUT_TRT == "None"){
+        NCAtable <<- NCA(NCA_SOURCE, 
+                         colSubj = "SUBJECT", colTime = "TIME", colConc = "CONC", 
+                         Dose = INPUT_NCADOSE, 
+                         AdmMode = INPUT_NCAADM, 
+                         TimeInfusion = INPUT_NCAINFUSION, 
+                         Method = ifelse(INPUT_NCALOG == TRUE, "Log", "Linear"),
+                         Report = INPUT_REPORT)
+    } else {
+        NCAtable <<- NCA(NCA_SOURCE, 
+                         colSubj = "SUBJECT", colTime = "TIME", colConc = "CONC", 
+                         colTrt = INPUT_TRT,
+                         Dose = INPUT_NCADOSE, 
+                         AdmMode = INPUT_NCAADM, 
+                         TimeInfusion = INPUT_NCAINFUSION, 
+                         Method = ifelse(INPUT_NCALOG == TRUE, "Log", "Linear"),
+                         Report = INPUT_REPORT)
+    }
+    
+}
+
+shinyServer(function(input, output, session) {
     ### 1 ###
     output$contents <- renderTable({
-        ### Template Start ###
-        inFile <- input$file1
-        if (is.null(inFile) & input$Dataset == "CSV")
-            return(print("None")) #NULL)
-        NCAsource <- if (input$Dataset == "CSV") read.csv(inFile$datapath) else 
-            if (input$Dataset == "Theoph") Theoph else 
-                if (input$Dataset == "Indometh") Indometh else 
-                    if (input$Dataset == "sd_oral_richpk") sd_oral_richpk else sd_iv_rich_pkpd
-        colnames(NCAsource) <- toupper(colnames(NCAsource))
-        if (colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJECT", "SUBJID", "ID", "USUBJID")] != "SUBJECT"){
-            colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJID", "ID", "USUBJID")] <- "SUBJECT"
-        }
-        ### Template End ###
-        
-        NCAsource 
+        ### Start ###
+        PrepNCAsource(input$file1, input$Dataset)
+        return(NCAsource)
     })
     
     ### 2 ###
     output$NCAresults <- renderTable({
-        ### Template Start ### input$file1, input$Dataset
-        inFile <- input$file1
-        if (is.null(inFile) & input$Dataset == "CSV")
-            return(print("None")) #NULL)
-        NCAsource <- if (input$Dataset == "CSV") read.csv(inFile$datapath) else 
-            if (input$Dataset == "Theoph") Theoph else 
-                if (input$Dataset == "Indometh") Indometh else 
-                    if (input$Dataset == "sd_oral_richpk") sd_oral_richpk else sd_iv_rich_pkpd
-        colnames(NCAsource) <- toupper(colnames(NCAsource))
-        if (colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJECT", "SUBJID", "ID", "USUBJID")] != "SUBJECT"){
-            colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJID", "ID", "USUBJID")] <- "SUBJECT"
-        }
-        ### Template End ###
-        
-        NCA(NCAsource, "SUBJECT", "TIME", "CONC", 
-            Dose = input$NCAdose, 
-            AdmMode = input$NCAadm, 
-            TimeInfusion = input$NCAinfusion, 
-            Method = ifelse(input$NCAlog == TRUE, "Log", "Linear"))
+        ### Start ###
+        PrepNCAsource(input$file1, input$Dataset)
+        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
+                     input$NCAinfusion, input$NCAlog)
+        return(NCAtable)
     })
     
     ### 3 ###
     output$NCAdesc <- renderTable({
-        ### Template Start ###
-        inFile <- input$file1
-        if (is.null(inFile) & input$Dataset == "CSV")
-            return(print("None")) #NULL)
-        NCAsource <- if (input$Dataset == "CSV") read.csv(inFile$datapath) else 
-            if (input$Dataset == "Theoph") Theoph else 
-                if (input$Dataset == "Indometh") Indometh else 
-                    if (input$Dataset == "sd_oral_richpk") sd_oral_richpk else sd_iv_rich_pkpd
-        colnames(NCAsource) <- toupper(colnames(NCAsource))
-        if (colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJECT", "SUBJID", "ID", "USUBJID")] != "SUBJECT"){
-            colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJID", "ID", "USUBJID")] <- "SUBJECT"
-        }
-        ### Template End ###
-        
-        NCAtable <- NCA(NCAsource, "SUBJECT", "TIME", "CONC", 
-                        Dose = input$NCAdose, 
-                        AdmMode = input$NCAadm, 
-                        TimeInfusion = input$NCAinfusion, 
-                        Method = ifelse(input$NCAlog == TRUE, "Log", "Linear"))
+        ### Start ###
+        PrepNCAsource(input$file1, input$Dataset)
+        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
+                     input$NCAinfusion, input$NCAlog)
         
         options(scipen = 100); options(digits = 2)
-        StatDesc <- stat.desc(NCAtable, basic = FALSE)#, basic = FALSE)
-        data.frame(VALUE = rownames(StatDesc), StatDesc[-1])
+        StatDesc <- stat.desc(NCAtable, basic = FALSE)
+        NCAStatDesc <- data.frame(VALUE = rownames(StatDesc), StatDesc[-1])
+        return(NCAStatDesc)
     })
     
     ### 4 ###
     output$NCAreport <- renderText({
-        ### Template Start ###
-        inFile <- input$file1
-        if (is.null(inFile) & input$Dataset == "CSV")
-            return(print("None")) #NULL)
-        NCAsource <- if (input$Dataset == "CSV") read.csv(inFile$datapath) else 
-            if (input$Dataset == "Theoph") Theoph else 
-                if (input$Dataset == "Indometh") Indometh else 
-                    if (input$Dataset == "sd_oral_richpk") sd_oral_richpk else sd_iv_rich_pkpd
-        colnames(NCAsource) <- toupper(colnames(NCAsource))
-        if (colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJECT", "SUBJID", "ID", "USUBJID")] != "SUBJECT"){
-            colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJID", "ID", "USUBJID")] <- "SUBJECT"
-        }
-        ### Template End ###
+        ### Start ###
+        PrepNCAsource(input$file1, input$Dataset)
+        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
+                     input$NCAinfusion, input$NCAlog, "Text")
         
-        NCAprint <- NCA(NCAsource, "SUBJECT", "TIME", "CONC", 
-                        Dose=input$NCAdose, 
-                        AdmMode = input$NCAadm, 
-                        TimeInfusion = input$NCAinfusion, 
-                        Report="Text", 
-                        Method = ifelse(input$NCAlog == TRUE, "Log", "Linear"))
-        paste(NCAprint, collapse="\n")
+        NCAprint <- paste(NCAtable, collapse="\n")
+        return(NCAprint)
     })
     
     output$PC <- renderTable({
-        ### Template Start ###
-        inFile <- input$file1
-        if (is.null(inFile) & input$Dataset == "CSV")
-            return(print("None")) #NULL)
-        NCAsource <- if (input$Dataset == "CSV") read.csv(inFile$datapath) else 
-            if (input$Dataset == "Theoph") Theoph else 
-                if (input$Dataset == "Indometh") Indometh else 
-                    if (input$Dataset == "sd_oral_richpk") sd_oral_richpk else sd_iv_rich_pkpd
-        colnames(NCAsource) <- toupper(colnames(NCAsource))
-        if (colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJECT", "SUBJID", "ID", "USUBJID")] != "SUBJECT"){
-            colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJID", "ID", "USUBJID")] <- "SUBJECT"
-        }
-        ### Template End ###
+        ### Start ###
+        PrepNCAsource(input$file1, input$Dataset)
         
         NCAsource %>% 
             rename(USUBJID = SUBJECT, PCORRES = CONC) %>% 
@@ -148,27 +108,10 @@ shinyServer(function(input, output) {
     })
     
     output$PP <- renderTable({
-        ### Template Start ###
-        inFile <- input$file1
-        if (is.null(inFile) & input$Dataset == "CSV")
-            return(print("None")) #NULL)
-        NCAsource <- if (input$Dataset == "CSV") read.csv(inFile$datapath) else 
-            if (input$Dataset == "Theoph") Theoph else 
-                if (input$Dataset == "Indometh") Indometh else 
-                    if (input$Dataset == "sd_oral_richpk") sd_oral_richpk else sd_iv_rich_pkpd
-        colnames(NCAsource) <- toupper(colnames(NCAsource))
-        if (colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJECT", "SUBJID", "ID", "USUBJID")] != "SUBJECT"){
-            colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJID", "ID", "USUBJID")] <- "SUBJECT"
-        }
-        ### Template End ###
-        
-        NCAtable <- NCA(NCAsource, "SUBJECT", "TIME", "CONC", 
-                        Dose = input$NCAdose, 
-                        AdmMode = input$NCAadm, 
-                        TimeInfusion = input$NCAinfusion, 
-                        Method = ifelse(input$NCAlog == TRUE, "Log", "Linear"))
-        
-        Abbr <- read.csv("abbr.csv", stringsAsFactors = FALSE)
+        ### Start ###
+        PrepNCAsource(input$file1, input$Dataset)
+        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
+                     input$NCAinfusion, input$NCAlog)
         
         NCAtable %>% gather(PPTESTCD, PPORRES, 2:dim(NCAtable)[2]) %>% 
             rename(USUBJID = SUBJECT) %>% 
@@ -182,26 +125,10 @@ shinyServer(function(input, output) {
     
     ### 5 ###
     output$plot <- renderggiraph({
-        ### Template Start ###
-        inFile <- input$file1
-        if (is.null(inFile) & input$Dataset == "CSV")
-            return(print("None")) #NULL)
-        NCAsource <- if (input$Dataset == "CSV") read.csv(inFile$datapath) else 
-            if (input$Dataset == "Theoph") Theoph else 
-                if (input$Dataset == "Indometh") Indometh else 
-                    if (input$Dataset == "sd_oral_richpk") sd_oral_richpk else sd_iv_rich_pkpd
-        colnames(NCAsource) <- toupper(colnames(NCAsource))
-        if (colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJECT", "SUBJID", "ID", "USUBJID")] != "SUBJECT"){
-            colnames(NCAsource)[colnames(NCAsource) %in% c("SUBJID", "ID", "USUBJID")] <- "SUBJECT"
-        }
-        NCAsource <- NCAsource %>% mutate(SUBJECT = as.character(SUBJECT))
-        ### Template End ###
-        
-        NCAtable <- NCA(NCAsource, "SUBJECT", "TIME", "CONC", 
-                        Dose = input$NCAdose, 
-                        AdmMode = input$NCAadm, 
-                        TimeInfusion = input$NCAinfusion, 
-                        Method = ifelse(input$NCAlog == TRUE, "Log", "Linear")) 
+        ### Start ###
+        PrepNCAsource(input$file1, input$Dataset)
+        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
+                     input$NCAinfusion, input$NCAlog)
         
         NCAgg <- NCAsource %>% 
             left_join(NCAtable %>% select(SUBJECT, CMAX, TMAX, AUCLST, LAMZHL, VZFO, CLFO), by = "SUBJECT") %>% 
@@ -212,9 +139,7 @@ shinyServer(function(input, output) {
                 <b>AUCLST</b> %3.1f, <b>LAMZHL</b> %3.1f
                 <b>VZFO</b> %3.1f, <b>CLFO</b> %3.1f', 
                 SUBJECT, TIME, CONC, TMAX, CMAX, AUCLST, LAMZHL, VZFO, CLFO))
-                
-                
-                #paste0(SUBJECT, TIME, CONC, CMAX, TMAX, AUCLST, LAMZHL, sep = ","))
+        
         p <- ggplot(NCAgg, aes(x=TIME, y=CONC, tooltip = TOOLTIP, 
                                group = SUBJECT, colour=as.factor(SUBJECT))) +
             geom_line(size = 0.5) + geom_point_interactive(size = 1.5) + 
@@ -228,12 +153,8 @@ shinyServer(function(input, output) {
             #theme(plot.title = element_text(size = rel(5))) +
             #scale_colour_brewer(palette = "Set1")
             
-        if (input$LogY == "Linear"){
-            print(ggiraph(code = {print(p)}))
-        } else {
-            print(
-                ggiraph(code = {print(p + scale_y_log10())})
-            )
-        }
+        if (input$LogY == "Linear")
+            print(ggiraph(code = {print(p)})) else 
+            print(ggiraph(code = {print(p + scale_y_log10())}))
     })
 })

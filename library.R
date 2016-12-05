@@ -1,0 +1,8 @@
+library(shiny)
+library(NonCompart)  
+library(markdown)
+library(pastecs)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(ggiraph)

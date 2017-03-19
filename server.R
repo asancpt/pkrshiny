@@ -1,4 +1,14 @@
-source("library.R")
+MyLib<- c("shiny", "pkr", "markdown", "pastecs", "ggplot2", "dplyr", 
+          "tidyr", "ggiraph", "shinydashboard", "knitr")
+MyLibList <- lapply(MyLib, library, character.only = TRUE)
+
+#Cit <- sapply(MyLib, function(x) citation(x))
+#Cit2 <- sapply(Cit, function(x) paste("-", print(x, style = "text")))
+
+
+# ‘style’ should be one of “text”, “Bibtex”, “citation”, “html”, “latex”, “textVersion”, “R” 
+
+# Dataset Prep ------------------------------------------------------------
 
 Theoph <- read.csv("example/Theoph.csv", as.is = TRUE) %>% 
     mutate(Subject = sprintf("%02d", Subject))
@@ -9,6 +19,8 @@ sd_oral_richpk <- read.csv("example/sd_oral_richpk.csv", as.is = TRUE) %>%
 sd_iv_rich_pkpd <- read.csv("example/sd_iv_rich_pkpd.csv", as.is = TRUE) %>% 
     rename(CONC = COBS) %>% mutate(ID = sprintf("%02d", ID))
 Abbr <- read.csv("abbr.csv", stringsAsFactors = FALSE)
+
+# Function Prep -----------------------------------------------------------
 
 PrepNCAsource <- function(INPUT_FILE1, INPUT_DATASET){
     if (is.null(INPUT_FILE1) & INPUT_DATASET == "CSV")
@@ -26,28 +38,42 @@ PrepNCAsource <- function(INPUT_FILE1, INPUT_DATASET){
     }
 }
 
-PrepNCAtable <- function(NCA_SOURCE, INPUT_NCADOSE, INPUT_NCAADM, 
-                         INPUT_NCAINFUSION, INPUT_NCALOG, INPUT_REPORT = "Table",
-                         INPUT_TRT = "None"){
-    if (INPUT_TRT == "None"){
-        NCAtable <<- NCA(NCA_SOURCE, 
-                         colSubj = "SUBJECT", colTime = "TIME", colConc = "CONC", 
-                         Dose = INPUT_NCADOSE, 
-                         AdmMode = INPUT_NCAADM, 
-                         TimeInfusion = INPUT_NCAINFUSION, 
-                         Method = ifelse(INPUT_NCALOG == TRUE, "Log", "Linear"),
-                         Report = INPUT_REPORT)
-    } else {
-        NCAtable <<- NCA(NCA_SOURCE, 
-                         colSubj = "SUBJECT", colTime = "TIME", colConc = "CONC", 
-                         colTrt = INPUT_TRT,
-                         Dose = INPUT_NCADOSE, 
-                         AdmMode = INPUT_NCAADM, 
-                         TimeInfusion = INPUT_NCAINFUSION, 
-                         Method = ifelse(INPUT_NCALOG == TRUE, "Log", "Linear"),
-                         Report = INPUT_REPORT)
-    }
-}
+#PrepNCAtable(NCA_SOURCE = NCAsource, 
+#             INPUT_NCADOSE = input$NCAdose, 
+#             INPUT_DOSECOL = "",
+#             INPUT_NCAADM = input$NCAadm, 
+#             INPUT_TRT = NCAGroupName,
+#             INPUT_NCAINFUSION = input$NCAinfusion, 
+#             INPUT_NCALOG = input$NCAlog,
+#             INPUT_REPORT = "Table")
+#
+#    function (concData, id, Time, conc, trt = "", fit = "Linear", 
+#              dose = 0, adm = "Extravascular", dur = 0, report = "Table", 
+#              iAUC = "", uTime = "h", uConc = "ug/L", uDose = "mg") 
+
+#PrepNCAtable <- function(NCA_SOURCE,
+#                         INPUT_TRT = "",
+#                         INPUT_NCALOG, 
+#                         INPUT_NCADOSE, 
+#                         INPUT_DOSECOL = "", 
+#                         INPUT_NCAADM, 
+#                         INPUT_NCAINFUSION, 
+#                         INPUT_REPORT = "Table"){
+#    NCAtable <<- NCA(concData = NCA_SOURCE, 
+#                     id = "SUBJECT", Time = "TIME", conc = "CONC", 
+#                     trt = INPUT_TRT,
+#                     fit = ifelse(INPUT_NCALOG == TRUE, "Log", "Linear"),
+#                     dose = INPUT_NCADOSE, 
+#                     adm = INPUT_NCAADM, 
+#                     dur = INPUT_NCAINFUSION, 
+#                     report = INPUT_REPORT,
+#                     iAUC = "", uTime = "h", uConc = "ug/L", uDose = "mg")
+#}
+
+# input$NCAdose
+# input$inCheckboxGroup1
+
+# Shiny Main --------------------------------------------------------------
 
 shinyServer(function(input, output, session) {
     ### 1 ###
@@ -59,39 +85,84 @@ shinyServer(function(input, output, session) {
         return(NCAsource)
     })
     
-    ### 2 ###
-    output$NCAresults <- renderTable({
-        if (is.null(input$file1) & input$Dataset == "CSV")
-            return(print("None"))
-        PrepNCAsource(input$file1, input$Dataset)
-        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
-                     input$NCAinfusion, input$NCAlog)
-        return(NCAtable)
-        
-    })
+#    ### 2 ###
+#    output$NCAresults <- renderTable({
+#        if (is.null(input$file1) & input$Dataset == "CSV")
+#            return(print("None"))
+#        PrepNCAsource(input$file1, input$Dataset)
+#
+#        NCAtable <- NCA(concData = NCAsource, 
+#            id = "SUBJECT", Time = "TIME", conc = "CONC", 
+#            trt = "",
+#            fit = ifelse(input$NCAlog == TRUE, "Log", "Linear"),
+#            dose = input$NCAdose, 
+#            adm = input$NCAadm, 
+#            dur = input$NCAinfusion, 
+#            report = "Table",
+#            uTime = "h", uConc = "ug/L", uDose = "mg")
+#        
+#        return(NCAtable)
+#        
+#    })
     ### 3 ###
     output$NCAgroup <- renderTable({
-        NCAGroup <- input$inCheckboxGroup
-        if (is.null(NCAGroup)){
-            PrepNCAsource(input$file1, input$Dataset)
-            PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
-                         input$NCAinfusion, input$NCAlog)
-            return(NCAtable)
-        }
-            
         ### Start ###
         if (is.null(input$file1) & input$Dataset == "CSV")
             return(print("None"))
+        
+        ## No Dose ##
+        
+        #NCAdoseCol <- input$inCheckboxGroup1
+        #if (is.null(NCAdoseCol)){
+        #    PrepNCAsource(input$file1, input$Dataset)
+        #    PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
+        #                 input$NCAinfusion, input$NCAlog)
+        #    return(NCAtable)
+        #}
+        
+        
+        ## No TRT ##
+        if (is.null(input$inCheckboxGroup2)){
+            PrepNCAsource(input$file1, input$Dataset)
+
+            NCAtable <- NCA(concData = NCAsource, 
+                id = "SUBJECT", Time = "TIME", conc = "CONC", 
+                trt = "",
+                fit = ifelse(input$NCAlog == TRUE, "Log", "Linear"),
+                dose = ifelse(
+                    is.null(input$inCheckboxGroup1),
+                    yes = input$NCAdose,
+                    no = NCAsource[, input$inCheckboxGroup1][NCAsource$TIME == 0]),
+                adm = input$NCAadm, 
+                dur = input$NCAinfusion, 
+                report = "Table",
+                uTime = "h", uConc = "ug/L", uDose = "mg")
+            
+            return(NCAtable)
+        }
+        
+        ## TRT exists ##
+        
         PrepNCAsource(input$file1, input$Dataset)
         
-        NCAGroupName <- paste(NCAGroup, collapse = "_")
-        NCAGroupData <- NCAsource %>% select_(.dots = NCAGroup) %>% 
-            unite_(col = "All", from = NCAGroup, sep = "_") %>% 
+        NCAGroupName <- paste(input$inCheckboxGroup2, collapse = "_")
+        NCAGroupData <- NCAsource %>% select_(.dots = input$inCheckboxGroup2) %>% 
+            unite_(col = "All", from = input$inCheckboxGroup2, sep = "_") %>% 
             as.vector()
         NCAsource[ , NCAGroupName] <- NCAGroupData
-        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
-                     input$NCAinfusion, input$NCAlog, 
-                     INPUT_TRT = NCAGroupName)
+
+        NCAtable <- NCA(concData = NCAsource, 
+            id = "SUBJECT", Time = "TIME", conc = "CONC", 
+            trt = NCAGroupName,
+            fit = ifelse(input$NCAlog == TRUE, "Log", "Linear"),
+            dose = ifelse(
+                is.null(input$inCheckboxGroup1),
+                yes = input$NCAdose,
+                no = NCAsource[, input$inCheckboxGroup1][NCAsource$TIME == 0]),
+            adm = input$NCAadm, 
+            dur = input$NCAinfusion, 
+            report = "Table",
+            uTime = "h", uConc = "ug/L", uDose = "mg")
         
         #colnames(NCAtable)[2] <- "GROUP"
         #NCAtable %>% arrange(GROUP, SUBJECT)
@@ -99,19 +170,49 @@ shinyServer(function(input, output, session) {
         else return(NCAtable[order(NCAtable[ ,2], NCAtable[ ,1]), ])
     })
     
-    ### 3 ###
+    ### 3 Descriptive Stat ###
     output$NCAdesc <- renderTable({
         ### Start ###
         if (is.null(input$file1) & input$Dataset == "CSV")
             return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
-        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
-                     input$NCAinfusion, input$NCAlog)
+        
+        NCAtable <- NCA(concData = NCAsource, 
+                        id = "SUBJECT", Time = "TIME", conc = "CONC", 
+                        trt = "",
+                        fit = ifelse(input$NCAlog == TRUE, "Log", "Linear"),
+                        dose = ifelse(
+                            is.null(input$inCheckboxGroup1),
+                            yes = input$NCAdose,
+                            no = NCAsource[, input$inCheckboxGroup1][NCAsource$TIME == 0]),
+                        adm = input$NCAadm, 
+                        dur = input$NCAinfusion, 
+                        report = "Table",
+                        uTime = "h", uConc = "ug/L", uDose = "mg")
         
         options(scipen = 100); options(digits = 2)
         StatDesc <- stat.desc(NCAtable, basic = FALSE)
         NCAStatDesc <- data.frame(VALUE = rownames(StatDesc), StatDesc[-1])
         return(NCAStatDesc)
+    })
+   
+    # http://stackoverflow.com/questions/33499651/rmarkdown-in-shiny-application 
+    #output$markdown <- renderUI({
+    #    knit('rmd.Rmd', quiet = TRUE)
+    #})
+    
+    output$plotFit<- renderUI({
+        PrepNCAsource(input$file1, input$Dataset)
+        HTML(markdown::markdownToHTML(knit('plotFit.Rmd', quiet = TRUE), 
+                                      #options = c("toc", "mathjax"), 
+                                      fragment.only = TRUE))
+    })
+    
+    output$plotPK <- renderUI({
+        PrepNCAsource(input$file1, input$Dataset)
+        HTML(markdown::markdownToHTML(knit('plotPK.Rmd', quiet = TRUE), 
+                                      #options = c("toc"), 
+                                      fragment.only = TRUE))
     })
     
     ### 4 ###
@@ -120,13 +221,25 @@ shinyServer(function(input, output, session) {
         if (is.null(input$file1) & input$Dataset == "CSV")
             return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
-        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
-                     input$NCAinfusion, input$NCAlog, "Text")
+        
+        NCAtable <- NCA(concData = NCAsource, 
+                        id = "SUBJECT", Time = "TIME", conc = "CONC", 
+                        trt = "",
+                        fit = ifelse(input$NCAlog == TRUE, "Log", "Linear"),
+                        dose = ifelse(
+                            is.null(input$inCheckboxGroup1),
+                            yes = input$NCAdose,
+                            no = NCAsource[, input$inCheckboxGroup1][NCAsource$TIME == 0]),
+                        adm = input$NCAadm, 
+                        dur = input$NCAinfusion, 
+                        report = "Text",
+                        uTime = "h", uConc = "ug/L", uDose = "mg")
         
         NCAprint <- paste(NCAtable, collapse="\n")
         return(NCAprint)
     })
-    
+   
+    ### PC column ### 
     output$PC <- renderTable({
         ### Start ###
         if (is.null(input$file1) & input$Dataset == "CSV")
@@ -145,13 +258,24 @@ shinyServer(function(input, output, session) {
                    PCORRES, PCTPT)
     })
     
+    ### PP ###
     output$PP <- renderTable({
-        ### Start ###
         if (is.null(input$file1) & input$Dataset == "CSV")
             return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
-        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
-                     input$NCAinfusion, input$NCAlog)
+        
+        NCAtable <- NCA(concData = NCAsource, 
+                        id = "SUBJECT", Time = "TIME", conc = "CONC", 
+                        trt = "",
+                        fit = ifelse(input$NCAlog == TRUE, "Log", "Linear"),
+                        dose = ifelse(
+                            is.null(input$inCheckboxGroup1),
+                            yes = input$NCAdose,
+                            no = NCAsource[, input$inCheckboxGroup1][NCAsource$TIME == 0]),
+                        adm = input$NCAadm, 
+                        dur = input$NCAinfusion, 
+                        report = "Table",
+                        uTime = "h", uConc = "ug/L", uDose = "mg")
         
         NCAtable %>% gather(PPTESTCD, PPORRES, 2:dim(NCAtable)[2]) %>% 
             rename(USUBJID = SUBJECT) %>% 
@@ -163,24 +287,31 @@ shinyServer(function(input, output, session) {
             select(STUDYID, DOMAIN, USUBJID, PPSEQ, PPGRPID, PPTESTCD, PPTEST, PPSCAT, PPORRES)
     })
     
-    ### 5 ###
+    ### ggiraph ###
     output$plot <- renderggiraph({
         ### Start ###
         if (is.null(input$file1) & input$Dataset == "CSV")
             return(print("None"))
         PrepNCAsource(input$file1, input$Dataset)
-        PrepNCAtable(NCAsource, input$NCAdose, input$NCAadm, 
-                     input$NCAinfusion, input$NCAlog)
+        
+        NCAtable <- NCA(concData = NCAsource, 
+                        id = "SUBJECT", Time = "TIME", conc = "CONC", 
+                        trt = "",
+                        fit = ifelse(input$NCAlog == TRUE, "Log", "Linear"),
+                        dose = input$NCAdose, 
+                        adm = input$NCAadm, 
+                        dur = input$NCAinfusion, 
+                        report = "Table",
+                        uTime = "h", uConc = "ug/L", uDose = "mg")
         
         NCAgg <- NCAsource %>% 
-            left_join(NCAtable %>% select(SUBJECT, CMAX, TMAX, AUCLST, LAMZHL, VZFO, CLFO), by = "SUBJECT") %>% 
+            left_join(NCAtable %>% select(SUBJECT, CMAX, TMAX, AUCLST, LAMZHL), by = "SUBJECT") %>% 
             mutate(TOOLTIP = sprintf(
                 '<u><b>SUBJECT</b> %s</u>
                 ( <b>TIME</b> %3.1f, <b>CONC</b> %3.1f )
                 ( <b>TMAX</b> %3.1f, <b>CMAX</b> %3.1f )
-                <b>AUCLST</b> %3.1f, <b>LAMZHL</b> %3.1f
-                <b>VZFO</b> %3.1f, <b>CLFO</b> %3.1f', 
-                SUBJECT, TIME, CONC, TMAX, CMAX, AUCLST, LAMZHL, VZFO, CLFO))
+                <b>AUCLST</b> %3.1f, <b>LAMZHL</b> %3.1f', 
+                SUBJECT, TIME, CONC, TMAX, CMAX, AUCLST, LAMZHL))
         
         p <- ggplot(NCAgg, aes(x=TIME, y=CONC, tooltip = TOOLTIP, 
                                group = SUBJECT, colour=as.factor(SUBJECT))) +
@@ -199,6 +330,7 @@ shinyServer(function(input, output, session) {
             print(ggiraph(code = {print(p)})) else 
             print(ggiraph(code = {print(p + scale_y_log10())}))
     })
+    
 ## Interactive Column Names    
     dsnames <- c()
     
@@ -215,10 +347,19 @@ shinyServer(function(input, output, session) {
         dsnames <- names(data_set())
         cb_options <- list()
         cb_options[ dsnames] <- dsnames
-        updateCheckboxGroupInput(session, inputId = "inCheckboxGroup",
-                                 label = "Carry",
+        # Dose
+        updateCheckboxGroupInput(session, inputId = "inCheckboxGroup1",
+                                 choices = cb_options,
+                                 selected = "")
+        # TRT
+        updateCheckboxGroupInput(session, inputId = "inCheckboxGroup2",
                                  choices = cb_options,
                                  selected = "")
     })
+    output$README <- renderUI({
+        HTML(markdown::markdownToHTML(knit('README.Rmd', quiet = TRUE), 
+                                      fragment.only = TRUE))
+    })
     
 })
+

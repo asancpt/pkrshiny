@@ -1,0 +1,48 @@
+```{r code = readLines("opts_chunk.R"), include=FALSE}
+```
+
+## pkr Shiny 
+
+- `pkr Shiny` <https://asan.shinyapps.io/pkrshiny>
+- `pkr Shiny` is open to everyone. We are happy to take your input. Please fork the repo, modify the codes and submit a pull request. <https://github.com/asancpt/pkrshiny>
+- We are actively developing R pacakges, Shiny Apps, and Edison Science Apps regarding clinical pharmacology and pharmacometrics. Please check here. <https://asancpt.github.io/softwares>
+
+### Installation of pkr R Package
+
+```r
+install.packages("pkr")
+library(pkr)
+NCA(Theoph, "Subject", "Time", "conc", dose=320, uConc="mg/L")
+```
+
+### Help
+
+- `pkr` package help <https://cran.r-project.org/web/packages/pkr/pkr.pdf>
+
+### Dataset
+
+- `Theoph`: Oral 320 mg (N=12) <http://stat.ethz.ch/R-manual/R-devel/library/datasets/html/Theoph.html>
+- `Indometh`: IV 25 mg (N=6) <http://stat.ethz.ch/R-manual/R-devel/library/datasets/html/Indometh.html>
+- `sd_oral_richpk`: Oral 5000mg (N=50) <https://github.com/dpastoor/PKPDdatasets>
+- `sd_iv_rich_pkpd`: IV diverse dosing (N=60) <https://github.com/dpastoor/PKPDdatasets>
+
+### CDISC materials
+
+- [CDISC SDTM Implementation Guide 3.2 PDF ](https://www.cdisc.org/sites/default/files/members/standard/foundational/sdtmig/sdtmig_20v3.2_20noportfolio.pdf)
+- [CDISC Terminology PDF](https://evs.nci.nih.gov/ftp1/CDISC/SDTM/SDTM%20Terminology.pdf)
+
+### References
+
+Gabrielsson J, Weiner D. Pharmacokinetic and Pharmacodynamic Data Analysis - Concepts and Applications. 5th ed. 2016.
+
+Shargel L, Yu A. Applied Biopharmaceutics and Pharmacokinetics. 7th ed. 2015.
+
+Rowland M, Tozer TN. Clinical Pharmacokinetics and Pharmacodynamics - Concepts and Applications. 4th ed. 2011.
+
+Gibaldi M, Perrier D. Pharmacokinetics. 2nd ed. revised and expanded. 1982.
+
+### Bibliography of R packages
+
+```{r}
+Cit <- sapply(MyLib, function(x) print(citation(x), style = "html"))
+```

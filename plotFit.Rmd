@@ -1,0 +1,12 @@
+```{r, code = readLines("opts_chunk.R"), include=FALSE}
+```
+
+### Individual Plots
+
+```{r figPlotFit}
+MyPlotFit <- lapply(unique(NCAsource$SUBJECT), function (x) plotFit(NCAsource, 
+        id = "SUBJECT", 
+        Time = "TIME", 
+        conc = "CONC", 
+        mol = "", adm = input$NCAadm, ID = x, Mol = ""))
+```

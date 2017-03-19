@@ -1,0 +1,420 @@
+```{r, code = readLines("opts_chunk.R"), include = FALSE}
+```
+
+# Concentration-time curve
+
+```{r plotPK2, include = FALSE}
+plotPK2 <- function (concData, id, Time, conc, unitTime = "hr", unitConc = "ng/mL", 
+    trt = "", fit = "Linear", dose = 0, adm = "Extravascular", 
+    dur = 0, outdir = "Output") 
+{
+    ncacol = colors()[c(35, 490, 632, 81)]
+    ncacol12 = c("paleturquoise3", "moccasin", "lightsteelblue", 
+        "salmon", "lightskyblue3", "sandybrown", "darkolivegreen2", 
+        "thistle2", "gray85", "orchid3", "darkseagreen1", "lightgoldenrod1")
+    ncacol11 = c("deeppink4", "indianred3", "sienna2", "sandybrown", 
+        "lightgoldenrod1", "lemonchiffon", "khaki1", "darkseagreen3", 
+        "aquamarine3", "steelblue", "mediumpurple4")
+    ncacol18 = c("navy", "orangered2", "yellowgreen", "magenta", 
+        "turquoise4", "tomato4", "mediumblue", "olivedrab4", 
+        "yellow3", "indianred", "lightcoral", "seashell3", "hotpink3", 
+        "midnightblue", "peru", "plum2", "khaki3", "lightgreen")
+    r.ramp = colorRamp(c("firebrick4", "thistle1"))
+    ncared = rgb(r.ramp(seq(0, 1, length = 8)), maxColorValue = 255)
+    g.ramp = colorRamp(c("darkgreen", "khaki1"))
+    ncagreen = rgb(g.ramp(seq(0, 1, length = 8)), maxColorValue = 255)
+    b.ramp = colorRamp(c("navyblue", "slategray1"))
+    ncablue = rgb(b.ramp(seq(0, 1, length = 8)), maxColorValue = 255)
+    if (!is.numeric(dose) | !is.numeric(dur) | !is.character(adm) | 
+        !is.character(fit)) 
+        stop("Bad Input!")
+    colOrd = paste0(adm, "Default")
+    ColName00 = RptCfg[RptCfg[, colOrd] > 0, c("PPTESTCD", colOrd)]
+    ColName0 = ColName00[order(ColName00[, colOrd]), "PPTESTCD"]
+    if (!(max(dose) > 0)) 
+        ColName0 = setdiff(ColName0, c("CMAXD", "AUCIFOD", "AUCIFPD"))
+    SUBJIDs = unique(as.character(concData[, id]))
+    nSUBJID = length(SUBJIDs)
+    if (trt != "") {
+        TRTs = sort(unique(as.character(concData[, trt])))
+        nTRT = length(TRTs)
+    }
+    else {
+        TRTs = ""
+        nTRT = 1
+    }
+    DrugName = deparse(substitute(concData))
+    timemin = min(concData[, Time])
+    timemax = max(concData[, Time])
+    concmin = min(concData[, conc])
+    concmax = max(concData[, conc])
+    bitsy = ifelse(concmin < 0.1, 0.01, 0.1)
+    if (length(dose) > 1 & length(dose) != nSUBJID) 
+        stop("dose should be fixed or given for each subject!")
+    if (length(dur) > 1 & length(dur) != nSUBJID) 
+        stop("dur should be fixed or given for each subject!")
+    Result = NCA(concData, id, Time, conc, trt = trt, fit = fit, 
+        dose = dose, adm = adm, dur = dur, uConc = unitConc)
+    if (outdir != "" & !file.exists(outdir)) 
+        dir.create(outdir)
+    
+    # PDF starts - Group
+    cat("\n\n## Group\n\n")
+    if (trt == "") {
+        plot(concData[, Time], concData[, conc], type = "n", 
+            col.main = ncacol[1], xlab = paste("Time (", unitTime, 
+                ")", sep = ""), ylab = paste("Concentration (", 
+                unitConc, ")", sep = ""), ylim = c(concmin, concmax), 
+            xlim = c(timemin, timemax))
+        title(paste("Concentration vs. Time Profile of", DrugName, 
+            sep = " "), outer = T, line = -2, cex = 1.2)
+        for (i in 1:nSUBJID) {
+            cSUBJID = SUBJIDs[i]
+            Dat = concData[concData[, id] == cSUBJID, ]
+            if (nrow(Dat) > 0) {
+                x = as.numeric(Dat[, Time])
+                y = as.numeric(Dat[, conc])
+                points(x, y, pch = 20, type = "b", col = ncacol18[i])
+            }
+        }
+        expnum = ifelse(nSUBJID < 10, 0.8, ifelse(nSUBJID < 20, 
+            0.7, ifelse(nSUBJID < 25, 0.6, ifelse(nSUBJID < 32, 
+                0.5, 0.4))))
+        legend("topright", inset = c(-0.2, 0), legend = unique(concData[, 
+            id]), xpd = T, col = ncacol18, pch = 16, lty = 1, 
+            title = "Subject ID", cex = expnum)
+    }
+    else {
+        for (j in 1:nTRT) {
+            cTRT = TRTs[j]
+            plot(concData[concData[, trt] == cTRT, Time], concData[concData[, 
+                trt] == cTRT, conc], type = "n", col.main = ncacol[j], 
+                xlab = paste("Time (", unitTime, ")", sep = ""), 
+                ylab = paste("Concentration (", unitConc, ")", 
+                  sep = ""), ylim = c(concmin, concmax), xlim = c(timemin, 
+                  timemax))
+            title(paste("Concentration vs. Time Profile of", 
+                DrugName, sep = " "), outer = T, line = -2, cex = 1.2)
+            title(cTRT, line = -2, col = "indianred")
+            for (i in 1:nSUBJID) {
+                cSUBJID = SUBJIDs[i]
+                Dat = concData[concData[, id] == cSUBJID & concData[, 
+                  trt] == cTRT, ]
+                if (nrow(Dat) > 0) {
+                  x = as.numeric(Dat[, Time])
+                  y = as.numeric(Dat[, conc])
+                  points(x, y, pch = 20, type = "b", col = ncacol18[i])
+                }
+            }
+            expnum = ifelse(nSUBJID < 10, 0.8, ifelse(nSUBJID < 
+                20, 0.7, ifelse(nSUBJID < 25, 0.6, ifelse(nSUBJID < 
+                32, 0.5, 0.4))))
+            legend("topright", inset = c(-0.3, 0), legend = unique(concData[, 
+                id]), xpd = T, col = ncacol18, pch = 16, lty = 1, 
+                title = "Subject ID", cex = expnum)
+        }
+    }
+    if (trt == "") {
+        plot(concData[, Time], log10(concData[, conc]), type = "n", 
+            col.main = ncacol[1], yaxt = "n", xlab = paste("Time (", 
+                unitTime, ")", sep = ""), ylab = paste("Concentration (", 
+                unitConc, ")", sep = ""), ylim = c(log10(concmin + 
+                bitsy), log10(concmax)), xlim = c(timemin, timemax))
+        ticks = seq(trunc(log10(concmin + bitsy)), trunc(log10(concmax)), 
+            by = 1)
+        ylabel = sapply(ticks, function(i) as.expression(bquote(10^.(i))))
+        axis(2, at = ticks, labels = ylabel)
+        title(paste("Concentration vs. Time Profile of", DrugName, 
+            sep = " "), outer = T, line = -2, cex = 1.2)
+        for (i in 1:nSUBJID) {
+            cSUBJID = SUBJIDs[i]
+            Dat = concData[concData[, id] == cSUBJID, ]
+            if (nrow(Dat) > 0) {
+                x = as.numeric(Dat[, Time])
+                y = as.numeric(Dat[, conc])
+                points(x, log10(y), pch = 20, type = "b", col = ncacol18[i])
+            }
+        }
+        if (nSUBJID <= 48) {
+            expnum = ifelse(nSUBJID < 10, 0.8, ifelse(nSUBJID < 
+                20, 0.7, ifelse(nSUBJID < 25, 0.6, ifelse(nSUBJID < 
+                32, 0.5, 0.4))))
+            legend("topright", inset = c(-0.2, 0), legend = unique(concData[, 
+                id]), xpd = T, col = ncacol18, pch = 16, lty = 1, 
+                title = "Subject ID", cex = expnum)
+        }
+    }
+    else {
+        for (j in 1:nTRT) {
+            cTRT = TRTs[j]
+            plot(concData[, Time], log10(concData[, conc]), type = "n", 
+                col.main = ncacol[j], yaxt = "n", xlab = paste("Time (", 
+                  unitTime, ")", sep = ""), ylab = paste("Concentration (", 
+                  unitConc, ")", sep = ""), ylim = c(log10(concmin + 
+                  bitsy), log10(concmax)), xlim = c(timemin, 
+                  timemax))
+            ticks = seq(trunc(log10(concmin + bitsy)), trunc(log10(concmax)), 
+                by = 1)
+            ylabel = sapply(ticks, function(i) as.expression(bquote(10^.(i))))
+            axis(2, at = ticks, labels = ylabel)
+            title(paste("Concentration vs. Time Profile of", 
+                DrugName, sep = " "), outer = T, line = -2, cex = 1.4)
+            title(cTRT, line = 0.1, col = "indianred", cex = 0.9)
+            for (i in 1:nSUBJID) {
+                cSUBJID = SUBJIDs[i]
+                Dat = concData[concData[, id] == cSUBJID & concData[, 
+                  trt] == cTRT, ]
+                if (nrow(Dat) > 0) {
+                  x = as.numeric(Dat[, Time])
+                  y = as.numeric(Dat[, conc])
+                  points(x, log10(y), pch = 20, type = "b", col = ncacol18[i])
+                }
+            }
+            if (nSUBJID <= 48) {
+                expnum = ifelse(nSUBJID < 10, 0.8, ifelse(nSUBJID < 
+                  20, 0.7, ifelse(nSUBJID < 25, 0.6, ifelse(nSUBJID < 
+                  32, 0.5, 0.4))))
+                legend("topright", inset = c(-0.3, 0), legend = unique(concData[, 
+                  id]), xpd = T, col = ncacol18, pch = 16, lty = 1, 
+                  title = "Subject ID", cex = expnum)
+            }
+        }
+    }
+    if (trt == "") {
+        tempbin = binr::bins.greedy(concData[, Time], nbins = nrow(concData[concData[, 
+            id] == SUBJIDs[1], ]), naive = TRUE)
+        temp.t = ifelse(tempbin$binlo < 5, round(tempbin$binlo, 
+            digits = 1), round(tempbin$binlo))
+        Dat3 = data.frame()
+        for (i in 1:nSUBJID) {
+            cSUBJID = SUBJIDs[i]
+            Dat = concData[concData[, id] == cSUBJID, ]
+            Dat2 = Result[Result[, id] == cSUBJID, ]
+            if (nrow(Dat) == length(temp.t)) {
+                Dat$NomTime = temp.t
+            }
+            Dat3 = rbind(Dat3, Dat)
+        }
+        meanC = aggregate(Dat3[, conc], by = list(Dat3$NomTime), 
+            FUN = mean)
+        sdC = aggregate(Dat3[, conc], by = list(Dat3$NomTime), 
+            FUN = sd)
+        nC = aggregate(Dat3[, conc], by = list(Dat3$NomTime), 
+            FUN = NROW)
+        temp.mean = meanC$x
+        temp.err = qnorm(0.975) * sdC$x/sqrt(nC$x)
+        temp.upper = temp.mean + temp.err
+        temp.lower = temp.mean - temp.err
+        plot(temp.t, temp.mean, col = ncacol[1], pch = 16, main = paste("Concentration vs. Time Profile of", 
+            DrugName, sep = " "), xlab = paste("Time (", unitTime, 
+            ")", sep = ""), ylab = paste("Concentration (", unitConc, 
+            ")", sep = ""), ylim = c(concmin, concmax), xlim = c(timemin, 
+            timemax))
+        segments(temp.t, temp.lower, temp.t, temp.upper, col = "grey")
+        segments(temp.t - 0.2, temp.lower, temp.t + 0.2, temp.lower, 
+            col = "grey")
+        segments(temp.t - 0.2, temp.upper, temp.t + 0.2, temp.upper, 
+            col = "grey")
+        legend("topright", c("Mean", "95% CI"), pch = c(16, NA), 
+            lty = c(NA, 1), col = c(ncacol[1], "grey"), inset = 0.05, 
+            cex = 0.7)
+        mtext(paste("Counts in each bin:", tempbin$binct, sep = " "), 
+            side = 3, line = -2, cex = 0.6)
+        mtext(paste(paste("Mean Cmax", signif(Dat2$CMAX, 3), 
+            sep = ": "), unitConc, sep = " "), side = 3, adj = 0, 
+            col = ncacol[2], cex = 0.8)
+        mtext(paste(paste("Mean AUClast", signif(Dat2$AUCLST, 
+            3), sep = ": "), paste(unitTime, unitConc, sep = "*"), 
+            sep = " "), side = 3, adj = 1, col = ncacol[2], cex = 0.8)
+    }
+    else {
+        for (j in 1:nTRT) {
+            cTRT = TRTs[j]
+            Dat.temp = concData[concData[, trt] == cTRT, ]
+            tempbin = binr::bins.greedy(Dat.temp[, Time], nbins = nrow(Dat.temp[Dat.temp[, 
+                id] == SUBJIDs[1], ]))
+            temp.t = ifelse(tempbin$binlo < 5, round(tempbin$binlo, 
+                digits = 1), round(tempbin$binlo))
+            Dat3 = data.frame()
+            for (i in 1:nSUBJID) {
+                cSUBJID = SUBJIDs[i]
+                Dat = concData[concData[, id] == cSUBJID & concData[, 
+                  trt] == cTRT, ]
+                Dat2 = Result[Result[, id] == cSUBJID & Result[, 
+                  trt] == cTRT, ]
+                if (nrow(Dat) == length(temp.t)) {
+                  Dat$NomTime = temp.t
+                }
+                Dat3 = rbind(Dat3, Dat)
+            }
+            meanC = aggregate(Dat3[, conc], by = list(Dat3$NomTime), 
+                FUN = mean)
+            sdC = aggregate(Dat3[, conc], by = list(Dat3$NomTime), 
+                FUN = sd)
+            nC = aggregate(Dat3[, conc], by = list(Dat3$NomTime), 
+                FUN = NROW)
+            temp.mean = meanC$x
+            temp.err = qnorm(0.975) * sdC$x/sqrt(nC$x)
+            temp.upper = temp.mean + temp.err
+            temp.lower = temp.mean - temp.err
+            plot(temp.t, temp.mean, col = ncacol[1], pch = 16, 
+                main = cTRT, col.main = "olivedrab", xlab = paste("Time (", 
+                  unitTime, ")", sep = ""), ylab = paste("Concentration (", 
+                  unitConc, ")", sep = ""), ylim = c(concmin, 
+                  concmax), xlim = c(timemin, timemax))
+            segments(temp.t, temp.lower, temp.t, temp.upper, 
+                col = "grey")
+            segments(temp.t - 0.2, temp.lower, temp.t + 0.2, 
+                temp.lower, col = "grey")
+            segments(temp.t - 0.2, temp.upper, temp.t + 0.2, 
+                temp.upper, col = "grey")
+            legend("topright", c("Mean", "95% CI"), pch = c(16, 
+                NA), lty = c(NA, 1), col = c(ncacol[1], "grey"), 
+                inset = 0.05, cex = 0.7)
+            title(paste("Concentration vs. Time Profile of", 
+                DrugName, sep = " "), outer = TRUE, cex = 1.5)
+            mtext(paste("Counts in each bin:", tempbin$binct, 
+                sep = " "), side = 3, line = -2, cex = 0.6)
+            mtext(paste(paste("Mean Cmax", signif(Dat2$CMAX, 
+                3), sep = ": "), unitConc, sep = " "), side = 3, 
+                adj = 0, col = ncacol[2], cex = 0.6)
+            mtext(paste(paste("Mean AUClast", signif(Dat2$AUCLST, 
+                3), sep = ": "), paste(unitTime, unitConc, sep = "*"), 
+                sep = " "), side = 3, adj = 1, col = ncacol[2], 
+                cex = 0.6)
+        }
+    }
+    
+    # Individual plot
+    cat("\n\n## Individual\n\n")
+    
+    if (trt == "") {
+        for (i in 1:nSUBJID) {
+            cSUBJID = SUBJIDs[i]
+            Dat = concData[concData[, id] == cSUBJID, ]
+            Dat2 = Result[Result[, id] == cSUBJID, ]
+            if (nrow(Dat) > 0) {
+                x = as.numeric(Dat[, Time])
+                y = as.numeric(Dat[, conc])
+                plot(x, y, pch = 16, , col = ncacol[1], type = "b", 
+                  xlab = paste("Time (", unitTime, ")", sep = ""), 
+                  ylab = paste("Concentration (", unitConc, ")", 
+                    sep = ""), ylim = c(concmin, concmax), xlim = c(timemin, 
+                    timemax))
+                title(paste("Subject ID", cSUBJID, sep = " "), 
+                  cex = 1.25)
+                mtext(paste(paste("Cmax", signif(Dat2$CMAX, 3), 
+                  sep = ": "), unitConc, sep = " "), side = 3, 
+                  adj = 0, col = ncacol[2], cex = 1)
+                mtext(paste(paste("AUClast", signif(Dat2$AUCLST, 
+                  3), sep = ": "), paste(unitTime, unitConc, 
+                  sep = "*"), sep = " "), side = 3, adj = 1, 
+                  col = ncacol[2], cex = 1)
+            }
+        }
+    }
+    else {
+        for (i in 1:nSUBJID) {
+            for (j in 1:nTRT) {
+                cSUBJID = SUBJIDs[i]
+                cTRT = TRTs[j]
+                Dat = concData[concData[, id] == cSUBJID & concData[, 
+                  trt] == cTRT, ]
+                Dat2 = Result[Result[, id] == cSUBJID & Result[, 
+                  trt] == cTRT, ]
+                if (nrow(Dat) > 0) {
+                  x = as.numeric(Dat[, Time])
+                  y = as.numeric(Dat[, conc])
+                  plot(x, y, pch = 16, , col = ncacol18[j], type = "b", 
+                    xlab = paste("Time (", unitTime, ")", sep = ""), 
+                    ylab = paste("Concentration (", unitConc, 
+                      ")", sep = ""), ylim = c(concmin, concmax), 
+                    xlim = c(timemin, timemax))
+                  title(paste("Subject ID", cSUBJID, cTRT, sep = " "), 
+                    cex = 1.25)
+                  mtext(paste(paste("Cmax", signif(Dat2$CMAX, 
+                    3), sep = ": "), unitConc, sep = " "), side = 3, 
+                    adj = 0, col = ncacol18[j], cex = 1)
+                  mtext(paste(paste("AUClast", signif(Dat2$AUCLST, 
+                    3), sep = ": "), paste(unitTime, unitConc, 
+                    sep = "*"), sep = " "), side = 3, adj = 1, 
+                    col = ncacol18[j], cex = 1)
+                }
+            }
+        }
+    }
+    if (trt == "") {
+        for (i in 1:nSUBJID) {
+            cSUBJID = SUBJIDs[i]
+            Dat = concData[concData[, id] == cSUBJID, ]
+            Dat2 = Result[Result[, id] == cSUBJID, ]
+            if (nrow(Dat) > 0) {
+                x = as.numeric(Dat[, Time])
+                y = as.numeric(Dat[, conc])
+                plot(x, log10(y), pch = 16, type = "b", col = ncacol[1], 
+                  xlab = paste("Time (", unitTime, ")", sep = ""), 
+                  yaxt = "n", ylab = paste(DrugName, "Concentration (", 
+                    unitConc, ")", sep = " "), ylim = c(log10(concmin + 
+                    bitsy), log10(concmax)), xlim = c(timemin, 
+                    timemax))
+                ticks = seq(trunc(log10(concmin + bitsy)), trunc(log10(concmax)), 
+                  by = 1)
+                ylabel = sapply(ticks, function(i) as.expression(bquote(10^.(i))))
+                axis(2, at = ticks, labels = ylabel)
+                title(paste("Subject ID", cSUBJID, sep = " "), 
+                  cex = 1.25)
+                mtext(paste(paste("Tmax", signif(Dat2$TMAX, 3), 
+                  sep = ": "), unitTime, sep = " "), side = 3, 
+                  adj = 0, col = ncacol[1], cex = 1)
+                mtext(paste(paste("Half-life", signif(Dat2$LAMZHL, 
+                  3), sep = ": "), unitTime, sep = " "), side = 3, 
+                  adj = 1, col = ncacol[1], cex = 1)
+            }
+        }
+    }
+    else {
+        for (i in 1:nSUBJID) {
+            for (j in 1:nTRT) {
+                cSUBJID = SUBJIDs[i]
+                cTRT = TRTs[j]
+                Dat = concData[concData[, id] == cSUBJID & concData[, 
+                  trt] == cTRT, ]
+                Dat2 = Result[Result[, id] == cSUBJID & Result[, 
+                  trt] == cTRT, ]
+                if (nrow(Dat) > 0) {
+                  x = as.numeric(Dat[, Time])
+                  y = as.numeric(Dat[, conc])
+                  plot(x, log10(y), pch = 16, type = "b", col = ncacol18[j], 
+                    xlab = paste("Time (", unitTime, ")", sep = ""), 
+                    yaxt = "n", ylab = paste(DrugName, "Concentration (", 
+                      unitConc, ")", sep = " "), ylim = c(log10(concmin + 
+                      bitsy), log10(concmax)), xlim = c(timemin, 
+                      timemax))
+                  ticks = seq(trunc(log10(concmin + bitsy)), 
+                    trunc(log10(concmax)), by = 1)
+                  ylabel = sapply(ticks, function(i) as.expression(bquote(10^.(i))))
+                  axis(2, at = ticks, labels = ylabel)
+                  title(paste("Subject ID", cSUBJID, cTRT, sep = " "), 
+                    cex = 1.25)
+                  mtext(paste(paste("Cmax", signif(Dat2$CMAX, 
+                    3), sep = ": "), unitConc, sep = " "), side = 3, 
+                    adj = 0, col = ncacol18[j], cex = 1)
+                  mtext(paste(paste("AUClast", signif(Dat2$AUCLST, 
+                    3), sep = ": "), paste(unitTime, unitConc, 
+                    sep = "*"), sep = " "), side = 3, adj = 1, 
+                    col = ncacol18[j], cex = 1)
+                }
+            }
+        }
+    }
+    
+    
+}
+```
+
+```{r figPlotPK, echo = FALSE}
+plotPK2(concData = NCAsource, id = "SUBJECT", Time = "TIME", conc = "CONC", unitTime = "hr", unitConc = "ng/mL", 
+    trt = "", fit = "Linear", dose = 320, adm = "Extravascular", 
+    dur = 0, outdir = "Output") 
+```
+

@@ -1,10 +1,8 @@
-source("library.R")
-
 navbarPage(
-    title = "Online NonCompart",
+    title = "pkr Shiny",
     ### 1 ###
     tabPanel(
-        title = "Data upload",
+        title = "Data",
         sidebarLayout(
             sidebarPanel(
                 fileInput("file1", 'Choose CSV File with "SUBJECT", "TIME", "CONC" (case-insensitive)',
@@ -23,11 +21,6 @@ navbarPage(
                     selected = "Theoph"),
                 #tags$hr(),
                 checkboxInput("NCAlog", "AUC Calculation by Log", TRUE),
-                sliderInput(
-                    inputId = "NCAdose",  
-                    label = "Dose (mg)", 
-                    min = 0, max = 1000, value = 320, step = 5, round=0),
-                helpText('If dosing is unknown or diverse, choose 0 (zero).'),
                 radioButtons("NCAadm", "Administration route",
                              c("Oral or Extravascular" = "Extravascular",
                                "Intravenous Bolus" = "Bolus",
@@ -41,33 +34,45 @@ navbarPage(
             )
         )
     ),
-    ### 2 ###
+    
+    ### GROUP ###
     tabPanel(
-        title = "Results",
+        title = "Result",
+        fluidRow(
+            column(4,
+                   sliderInput(
+                       inputId = "NCAdose",  
+                       label = "Set dose (mg)", 
+                       min = 0, max = 1000, value = 320, step = 5, round=0),
+                   helpText('If dosing amount is unknown, choose 0 (zero).')
+            ),
+                column(3, offset = 1, 
+                   checkboxGroupInput(inputId = "inCheckboxGroup1", choices = "initial", 
+                                      label = "or select dose column"),
+                   helpText('If selected, value of left slider will be ignored.')
+            ),
+            column(3, 
+                   checkboxGroupInput(inputId = "inCheckboxGroup2", choices = "initial", 
+                                      label = "Select TRT column if exists"),
+                   helpText('TRT column usually contains R or T. You can select multiple columns if the study has TRT, PRD, SEQ and so on.'),
+                   checkboxInput('CarrySort', 'Sort TRT', FALSE)
+            )
+        ),
         tags$h3("Individual Parameters"),
-        tableOutput("NCAresults"),
+        tableOutput("NCAgroup"),
         tags$h3("Descriptive Statistics"),
         tableOutput("NCAdesc"),
         includeMarkdown("parameters.md")
     ),
     
-    ### GROUP ###
-    tabPanel(
-        title = "Carry",
-        checkboxGroupInput(inputId = "inCheckboxGroup", choices = "initial", label = "initial"),
-        tags$h3("Individual Parameters"),
-        checkboxInput('CarrySort', 'Sort', FALSE),
-        tableOutput("NCAgroup")
-    ),
-    
     ### 3A ###
     tabPanel(
-        title = "Official Report",
+        title = "Report",
         verbatimTextOutput("NCAreport")
     ),
     ### 3B ###
     tabPanel(
-        title = "CDISC Report",
+        title = "CDISC",
         textInput("StudyID", "Study ID", ""),
         textInput("Drug", "Drug", ""),
         tags$h3("PP"),
@@ -77,7 +82,8 @@ navbarPage(
     ),
     ### 4 ###
     tabPanel(
-        title = "Plots",
+        title = "Dynamic",
+        helpText('Hovering a cursor over a plot shows dynamic results.'),
         sidebarLayout(
             sidebarPanel(
                 radioButtons("LogY", "Y axis",
@@ -90,14 +96,28 @@ navbarPage(
             )
         )
     ),
-    ### 5 ###
+    ### 20 ###
+    tabPanel(
+        title = "Plot", 
+        helpText('Generating plots takes a while. Please wait.'),
+        htmlOutput('plotPK')
+    ),
+    ### 21 ###
+    tabPanel(
+        title = "Fit", 
+        helpText('Generating plots takes a while. Please wait.'),
+        htmlOutput('plotFit')
+    ),
+    ### 90 ###
     tabPanel(
         title = "Help", 
-        includeMarkdown("README.md")
+        #includeMarkdown("README.md")
+        htmlOutput('README')
     ),
-    ### 6 ###
+    ### 99 ###
     tabPanel(
         title = "Contact", 
-        includeMarkdown("CONTACT.md")
+        includeMarkdown("CONTACT.md"),
+        includeHTML("disqus.html")
     )
 )

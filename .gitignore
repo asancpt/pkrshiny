@@ -1,6 +1,7 @@
 rsconnect.R
 example/PC_LCB.csv
 googlesheets.R
+/figure/
 
 # History files
 .Rhistory

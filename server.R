@@ -1,6 +1,16 @@
 MyLib<- c("shiny", "pkr", "markdown", "pastecs", "ggplot2", "dplyr", 
           "tidyr", "ggiraph", "shinydashboard", "knitr")
-MyLibList <- lapply(MyLib, library, character.only = TRUE)
+library(shiny)
+library(pkr)
+library(markdown)
+library(pastecs)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(ggiraph)
+library(shinydashboard)
+library(knitr)
+#MyLibList <- lapply(MyLib, library, character.only = TRUE)
 
 #Cit <- sapply(MyLib, function(x) citation(x))
 #Cit2 <- sapply(Cit, function(x) paste("-", print(x, style = "text")))

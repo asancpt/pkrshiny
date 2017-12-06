@@ -1,4 +1,4 @@
-```{r, code = readLines("opts_chunk.R"), include=FALSE}
+```{r, code = readLines("R/opts_chunk.R"), include=FALSE}
 ```
 
 ### Individual Plots

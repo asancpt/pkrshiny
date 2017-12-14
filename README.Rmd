@@ -3,6 +3,15 @@
 
 ## pkr Shiny 
 
+<div align="center">
+  <a href="https://opensource.org/licenses/mit-license.php">
+    <img alt="MIT Licence" src="https://badges.frapsoft.com/os/mit/mit.svg?v=103" />
+  </a>
+  <a href="https://github.com/ellerbrock/open-source-badge/">
+    <img alt="Open Source Love" src="https://badges.frapsoft.com/os/v1/open-source.svg?v=103" />
+  </a>
+</div>
+
 - `pkr Shiny` <https://asan.shinyapps.io/pkrshiny>
 - `pkr Shiny` is open to everyone. We are happy to take your input. Please fork the repo, modify the codes and submit a pull request. <https://github.com/asancpt/pkrshiny>
 - We are actively developing R pacakges, Shiny Apps, and Edison Science Apps regarding clinical pharmacology and pharmacometrics. Please check here. <https://asancpt.github.io/softwares>

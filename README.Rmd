@@ -55,3 +55,10 @@ Gibaldi M, Perrier D. Pharmacokinetics. 2nd ed. revised and expanded. 1982.
 ```{r}
 Cit <- sapply(MyLib, function(x) print(citation(x), style = "html"))
 ```
+
+### Session information
+
+```{r, results="markup"}
+devtools::session_info()
+```
+
